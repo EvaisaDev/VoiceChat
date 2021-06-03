@@ -35,7 +35,7 @@ namespace Evaisa.VoiceChat
     {
         public const string dependencyString = "com.evaisa.r2voicechat";
         public const string modName = "r2voicechat";
-        public const string version = "1.0.0";
+        public const string version = "1.1.0";
 
         public static VoiceChat instance;
         public static GameObject audioPlayerPrefab;
@@ -54,6 +54,7 @@ namespace Evaisa.VoiceChat
         public static SettingsApi.BoolSetting voiceActivation;
         public static SettingsApi.SliderSetting voiceSensitivity;
         public static SettingsApi.BoolSetting spatialSound;
+        public static SettingsApi.SliderSetting voiceDistance;
         public static SettingsApi.BoolSetting vrControls;
         public static SettingsApi.CarouselSetting microphone;
         public static SettingsApi.CarouselSetting bitRate;
@@ -87,27 +88,75 @@ namespace Evaisa.VoiceChat
 
             DestroyImmediate(voiceControllerPrefab);
 
-            if (Microphone.devices.Length > 0)
-            {
-                microphone = SettingsApi.RegisterCarouselSetting("Microphone", "The microphone you want to use.", Microphone.devices[0], Microphone.devices.ToList(), "Voicechat");
-            }
-            else
-            {
-                microphone = SettingsApi.RegisterCarouselSetting("Microphone", "The microphone you want to use.", "null", new List<string>() { "null" }, "Voicechat");
-            }
+
 
             
-            micVolume = SettingsApi.RegisterSliderSetting("Microphone Volume", "The volume of your microphone.", 100, 0, 100, "Voicechat");
-            micBoost = SettingsApi.RegisterSliderSetting("Microphone Boost", "Additional boost of your microphone volume.", 0, 0, 100, "Voicechat");
-            voiceVolume = SettingsApi.RegisterSliderSetting("Voicechat Volume", "The volume of other people in voicechat.", 100, 0, 100, "Voicechat");
+            micVolume = SettingsApi.RegisterSliderSetting("Microphone Volume", "The volume of your microphone.", 100, 0, 100, "{0:0}%", "Voicechat");
+            micBoost = SettingsApi.RegisterSliderSetting("Microphone Boost", "Additional boost of your microphone volume.", 0, 0, 100, "{0:0}%", "Voicechat");
+            voiceVolume = SettingsApi.RegisterSliderSetting("Voicechat Volume", "The volume of other people in voicechat.", 100, 0, 100, "{0:0}%", "Voicechat");
             voiceActivation = SettingsApi.RegisterBoolSetting("Voice Activation", "Use voice activation rather than push to talk.", false, "Voicechat");
-            voiceSensitivity = SettingsApi.RegisterSliderSetting("Voice Sensitivity", "The sensitivity of the voice activation. Lower is more sensitive.", 50, 0, 100, "Voicechat");
+            voiceSensitivity = SettingsApi.RegisterSliderSetting("Voice Sensitivity", "The sensitivity of the voice activation. Lower is more sensitive.", 50, 0, 100, "{0:0}%", "Voicechat");
             spatialSound = SettingsApi.RegisterBoolSetting("[Host Only] Proximity Voicechat", "Use proximity voicechat, voices come from player characters. \n\nThis setting is host only.", false, "Voicechat");
+            voiceDistance = SettingsApi.RegisterSliderSetting("[Host Only] Voicechat Distance", "The maximum distance for proximity voicechat. \n\nThis setting is host only.", 100, 0, 1000, "{0:0}m", "Voicechat");
             vrControls = SettingsApi.RegisterBoolSetting("VR Gesture Control", "Enable VR controls, allowing you to voicechat by pressing your controller to your ear.", true, "Voicechat");
             lowLatencyMode = SettingsApi.RegisterBoolSetting("[Host Only] Low Latency Mode", "Experimental Low latency mode, should reduce latency but may cause more strain on the network connection and might cause a hit on audio quality. \n\nThis setting is host only. \n\nThis setting cannot be changed while in a match.", false, "Voicechat");
             bitRate = SettingsApi.RegisterCarouselSetting("[Host Only] Bitrate", "The bit rate of the voice chat, higher increases quality but might introduce latency if it cannot be handled by the connection. \n\nThis setting is host only. \n\nThis setting cannot be changed while in a match.", "22000", new List<string>() { "8000", "11000", "16000", "22000", "32000", "44100", "48000", "64000" }, "Voicechat");
             loopBackAudio = SettingsApi.RegisterBoolSetting("[Debugging] Audio Loopback", "Loops back your own microphone input, note that it is very delayed due to latency optimizations. Mostly meant for debugging.", false, "Voicechat");
-            
+
+            if (Microphone.devices.Length > 0)
+            {
+                microphone = SettingsApi.RegisterCarouselSetting("Microphone Device", "The microphone you want to use for voicechat.", Microphone.devices[0], Microphone.devices.ToList(), "Voicechat", true);
+            }
+            else
+            {
+                microphone = SettingsApi.RegisterCarouselSetting("Microphone Device", "The microphone you want to use for voicechat.", "null", new List<string>() { "null" }, "Voicechat", true);
+            }
+
+            On.RoR2.UI.MainMenu.SubmenuMainMenuScreen.OnEnter += (orig, self, controller) =>
+            {
+                orig(self, controller);
+
+
+                if (self.submenuPanelPrefab.name == "SettingsPanel")
+                {
+                    if (microphone != null)
+                    {
+                        microphone.options = Microphone.devices.Length > 0 ? Microphone.devices.ToList() : new List<string>() { "null" };
+                        if (!microphone.options.Contains(microphone.convar.value))
+                        {
+                            if (Microphone.devices.Length > 0)
+                            {
+                                microphone.convar.value = Microphone.devices[0];
+                            }
+                            else
+                            {
+                                microphone.convar.value = "null";
+                            }
+                        }
+                    }
+                }
+            };
+
+            On.RoR2.UI.PauseScreenController.OpenSettingsMenu += (orig, self) =>
+            {
+                orig(self);
+                if (microphone != null)
+                {
+                    microphone.options = Microphone.devices.Length > 0 ? Microphone.devices.ToList() : new List<string>() { "null" };
+                    if (!microphone.options.Contains(microphone.convar.value))
+                    {
+                        if (Microphone.devices.Length > 0)
+                        {
+                            microphone.convar.value = Microphone.devices[0];
+                        }
+                        else
+                        {
+                            microphone.convar.value = "null";
+                        }
+                    }
+                }
+
+            };
 
             SettingsApi.Init();
 

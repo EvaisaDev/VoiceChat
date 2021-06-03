@@ -22,6 +22,8 @@ namespace Evaisa.VoiceChat
             On.RoR2.UI.MainMenu.SubmenuMainMenuScreen.OnEnter += (orig, self, controller) =>
             {
                 orig(self, controller);
+
+
                 if (self.submenuPanelPrefab.name == "SettingsPanel")
                     SetupSettings(self.submenuPanelInstance);
             };
@@ -91,17 +93,17 @@ namespace Evaisa.VoiceChat
                 if(setting.type == settingType.Boolean)
                 {
                     BoolSetting mySetting = (BoolSetting)setting;
-                    GenerateBoolSetting(setting.name, setting.convarID, setting.description, boolSetting, subPanelInstance.transform.Find("Scroll View/Viewport/VerticalLayout"), firstSetting, mySetting.defaultValue == "1" ? true : false);
+                    GenerateBoolSetting(mySetting.name, mySetting.convarID, mySetting.description, boolSetting, subPanelInstance.transform.Find("Scroll View/Viewport/VerticalLayout"), firstSetting, mySetting.defaultValue == "1" ? true : false);
                 }
                 if(setting.type == settingType.Slider)
                 {
                     SliderSetting mySetting = (SliderSetting)setting;
-                    GenerateSliderSetting(setting.name, setting.convarID, setting.description, sliderSetting, subPanelInstance.transform.Find("Scroll View/Viewport/VerticalLayout"), firstSetting, mySetting.minValue, mySetting.maxValue, float.Parse( mySetting.defaultValue, CultureInfo.InvariantCulture.NumberFormat));
+                    GenerateSliderSetting(mySetting.name, mySetting.convarID, mySetting.description, mySetting.formatString, sliderSetting, subPanelInstance.transform.Find("Scroll View/Viewport/VerticalLayout"), firstSetting, mySetting.minValue, mySetting.maxValue, float.Parse( mySetting.defaultValue, CultureInfo.InvariantCulture.NumberFormat));
                 }
                 if(setting.type == settingType.Carousel)
                 {
                     CarouselSetting mySetting = (CarouselSetting)setting;
-                    GenerateCarouselSetting(setting.name, setting.convarID, setting.description, carouselSetting, subPanelInstance.transform.Find("Scroll View/Viewport/VerticalLayout"), firstSetting, mySetting.defaultValue, mySetting.options);
+                    GenerateCarouselSetting(mySetting.name, mySetting.convarID, mySetting.description, carouselSetting, subPanelInstance.transform.Find("Scroll View/Viewport/VerticalLayout"), firstSetting, mySetting.defaultValue, mySetting.options);
                 }
             });
 
@@ -112,7 +114,7 @@ namespace Evaisa.VoiceChat
         }
 
 
-        private static void GenerateSliderSetting(string Name, string id, string description, GameObject settingToInstantiate, Transform panelLayout, bool isFirst, float minValue, float maxValue, float defaultValue)
+        private static void GenerateSliderSetting(string Name, string id, string description, string formatString, GameObject settingToInstantiate, Transform panelLayout, bool isFirst, float minValue, float maxValue, float defaultValue)
         {
             GameObject settingInstance = Object.Instantiate(settingToInstantiate, panelLayout);
 
@@ -123,6 +125,7 @@ namespace Evaisa.VoiceChat
             slider.minValue = minValue;
             slider.maxValue = maxValue;
             slider.originalValue = TextSerialization.ToStringInvariant(defaultValue);
+            slider.formatString = formatString;
 
             settingInstance.name = string.Format("SettingsEntryButton, Slider ({0})", Name);
 
@@ -290,7 +293,7 @@ namespace Evaisa.VoiceChat
             return sb.ToString();
         }
 
-        public static BoolSetting RegisterBoolSetting(string name, string description, bool defaultValue, string tabName)
+        public static BoolSetting RegisterBoolSetting(string name, string description, bool defaultValue, string tabName, bool pushToTop = false)
         {
             var setting = new BoolSetting
             {
@@ -301,12 +304,19 @@ namespace Evaisa.VoiceChat
                 convarID = RemoveSpecialCharacters((VoiceChat.modName + name).ToLower().Replace(" ", "_")),
                 tabName = tabName
             };
-            registeredSettings.Add((Setting)setting);
+            if (pushToTop)
+            {
+                registeredSettings.Insert(0, (Setting)setting);
+            }
+            else
+            {
+                registeredSettings.Add((Setting)setting);
+            }
 
             return setting;
         }
 
-        public static CarouselSetting RegisterCarouselSetting(string name, string description, string defaultValue, List<string> options, string tabName)
+        public static CarouselSetting RegisterCarouselSetting(string name, string description, string defaultValue, List<string> options, string tabName, bool pushToTop = false)
         {
             var setting = new CarouselSetting
             {
@@ -318,12 +328,19 @@ namespace Evaisa.VoiceChat
                 convarID = RemoveSpecialCharacters((VoiceChat.modName + name).ToLower().Replace(" ", "_")),
                 tabName = tabName
             };
-            registeredSettings.Add((Setting)setting);
+            if (pushToTop)
+            {
+                registeredSettings.Insert(0, (Setting)setting);
+            }
+            else
+            {
+                registeredSettings.Add((Setting)setting);
+            }
 
             return setting;
         }
 
-        public static SliderSetting RegisterSliderSetting(string name, string description, float defaultValue, float minValue, float maxValue, string tabName)
+        public static SliderSetting RegisterSliderSetting(string name, string description, float defaultValue, float minValue, float maxValue, string formatString, string tabName, bool pushToTop = false)
         {
             var setting = new SliderSetting
             {
@@ -333,10 +350,18 @@ namespace Evaisa.VoiceChat
                 maxValue = maxValue,
                 name = name,
                 description = description,
+                formatString = formatString,
                 convarID = RemoveSpecialCharacters((VoiceChat.modName + name).ToLower().Replace(" ", "_")),
                 tabName = tabName
             };
-            registeredSettings.Add((Setting)setting);
+            if (pushToTop)
+            {
+                registeredSettings.Insert(0, (Setting)setting);
+            }
+            else
+            {
+                registeredSettings.Add((Setting)setting);
+            }
 
             return setting;
         }
@@ -349,6 +374,11 @@ namespace Evaisa.VoiceChat
             public string description;
             public string convarID;
             public string tabName;
+
+            public void Destroy()
+            {
+                registeredSettings.Remove((Setting)this);
+            }
         }
 
         public class BoolSetting : Setting
@@ -364,6 +394,7 @@ namespace Evaisa.VoiceChat
             {
                 convar.SetString(value ? "true" : "false");
             }
+
         }
 
         public class SliderSetting : Setting
@@ -371,6 +402,7 @@ namespace Evaisa.VoiceChat
             public FloatConVar convar;
             public float minValue;
             public float maxValue;
+            public string formatString;
 
             public float GetValue()
             {

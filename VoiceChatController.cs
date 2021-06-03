@@ -53,13 +53,12 @@ namespace Evaisa.VoiceChat
             instance = this;
 
             if (NetworkServer.active) {
-                VoiceChat.Print("Setting frequency.");
                 FREQUENCY = int.Parse(VoiceChat.bitRate.GetValue());
                 bufferLength = VoiceChat.lowLatencyMode.GetValue() ? 5 : 40;
                 new PassFrequency
                 {
                     bitrate = int.Parse(VoiceChat.bitRate.GetValue()),
-                    lowLatency = VoiceChat.lowLatencyMode.GetValue()
+                    lowLatency = VoiceChat.lowLatencyMode.GetValue(),
                 }.Send(NetworkDestination.Clients);
             }
         }
@@ -697,7 +696,7 @@ namespace Evaisa.VoiceChat
             public void OnReceived()
             {
                 var localizedAudio = VoiceChat.spatialSound.GetValue();
-
+                var localizedAudioDistance = (int)VoiceChat.voiceDistance.GetValue();
                 //VoiceChat.Print("3D Audio? " + localizedAudio);
 
                 new SendVoiceChat
@@ -709,6 +708,7 @@ namespace Evaisa.VoiceChat
                     chunkCount = chunkCount,
                     isEndPoint = isEndPoint,
                     localizedAudio = localizedAudio,
+                    localizedAudioDistance = localizedAudioDistance
                 }.Send(NetworkDestination.Clients);
             }
 
@@ -753,6 +753,7 @@ namespace Evaisa.VoiceChat
             internal int chunkCount;
             internal bool isEndPoint;
             internal bool localizedAudio;
+            internal int localizedAudioDistance;
             public void Serialize(NetworkWriter writer)
             {
                 writer.Write(ba.Length);
@@ -763,6 +764,7 @@ namespace Evaisa.VoiceChat
                 writer.Write(chan);
                 writer.Write(isEndPoint);
                 writer.Write(localizedAudio);
+                writer.Write(localizedAudioDistance);
             }
             public void Deserialize(NetworkReader reader)
             {
@@ -774,6 +776,7 @@ namespace Evaisa.VoiceChat
                 this.chan = reader.ReadInt32();
                 this.isEndPoint = reader.ReadBoolean();
                 this.localizedAudio = reader.ReadBoolean();
+                this.localizedAudioDistance = reader.ReadInt32();
             }
             public void OnReceived()
 			{
@@ -934,7 +937,7 @@ namespace Evaisa.VoiceChat
                                 audio1.volume = 1.0f;
                                 audio1.spatialBlend = 0.0f;
                                 audio1.minDistance = 0.0f;
-                                audio1.maxDistance = 100f;
+                                audio1.maxDistance = 99999999f;
                                 audio1.panStereo = 0.0f;
                                 UnrealisticRolloff(audio1);
                                 VoiceChat.Print("Setting up 2D audio.");
@@ -944,7 +947,7 @@ namespace Evaisa.VoiceChat
                                 audio1.volume = 1.0f;
                                 audio1.spatialBlend = 1.0f;
                                 audio1.minDistance = 0.0f;
-                                audio1.maxDistance = 100f;
+                                audio1.maxDistance = localizedAudioDistance;
                                 audio1.panStereo = 0.0f;
                                 RealisticRolloff(audio1);
                                 VoiceChat.Print("Setting up 3D audio.");
@@ -987,7 +990,7 @@ namespace Evaisa.VoiceChat
                                 audio1.volume = 1.0f;
                                 audio1.spatialBlend = 1.0f;
                                 audio1.minDistance = 0.0f;
-                                audio1.maxDistance = 100f;
+                                audio1.maxDistance = localizedAudioDistance;
                                 audio1.panStereo = 0.0f;
                                 RealisticRolloff(audio1);
                                 VoiceChat.Print("Setting up 3D audio.");
