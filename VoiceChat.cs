@@ -35,7 +35,7 @@ namespace Evaisa.VoiceChat
     {
         public const string dependencyString = "com.evaisa.r2voicechat";
         public const string modName = "r2voicechat";
-        public const string version = "1.1.0";
+        public const string version = "1.1.3";
 
         public static VoiceChat instance;
         public static GameObject audioPlayerPrefab;
@@ -45,6 +45,8 @@ namespace Evaisa.VoiceChat
         public static string assemblyLocation;
         public static KeyCode pushToTalkKey;
         public static GameObject voiceController;
+
+        public static bool debugMode = false;
 
         public bool VRModInstalled = false;
 
@@ -96,9 +98,9 @@ namespace Evaisa.VoiceChat
             voiceVolume = SettingsApi.RegisterSliderSetting("Voicechat Volume", "The volume of other people in voicechat.", 100, 0, 100, "{0:0}%", "Voicechat");
             voiceActivation = SettingsApi.RegisterBoolSetting("Voice Activation", "Use voice activation rather than push to talk.", false, "Voicechat");
             voiceSensitivity = SettingsApi.RegisterSliderSetting("Voice Sensitivity", "The sensitivity of the voice activation. Lower is more sensitive.", 50, 0, 100, "{0:0}%", "Voicechat");
+            vrControls = SettingsApi.RegisterBoolSetting("VR Gesture Control", "Enable VR controls, allowing you to voicechat by pressing your controller to your ear.", true, "Voicechat");
             spatialSound = SettingsApi.RegisterBoolSetting("[Host Only] Proximity Voicechat", "Use proximity voicechat, voices come from player characters. \n\nThis setting is host only.", false, "Voicechat");
             voiceDistance = SettingsApi.RegisterSliderSetting("[Host Only] Voicechat Distance", "The maximum distance for proximity voicechat. \n\nThis setting is host only.", 100, 0, 1000, "{0:0}m", "Voicechat");
-            vrControls = SettingsApi.RegisterBoolSetting("VR Gesture Control", "Enable VR controls, allowing you to voicechat by pressing your controller to your ear.", true, "Voicechat");
             lowLatencyMode = SettingsApi.RegisterBoolSetting("[Host Only] Low Latency Mode", "Experimental Low latency mode, should reduce latency but may cause more strain on the network connection and might cause a hit on audio quality. \n\nThis setting is host only. \n\nThis setting cannot be changed while in a match.", false, "Voicechat");
             bitRate = SettingsApi.RegisterCarouselSetting("[Host Only] Bitrate", "The bit rate of the voice chat, higher increases quality but might introduce latency if it cannot be handled by the connection. \n\nThis setting is host only. \n\nThis setting cannot be changed while in a match.", "22000", new List<string>() { "8000", "11000", "16000", "22000", "32000", "44100", "48000", "64000" }, "Voicechat");
             loopBackAudio = SettingsApi.RegisterBoolSetting("[Debugging] Audio Loopback", "Loops back your own microphone input, note that it is very delayed due to latency optimizations. Mostly meant for debugging.", false, "Voicechat");
@@ -174,15 +176,15 @@ namespace Evaisa.VoiceChat
 
                 if (self.name == "volume_master")
                 {
-                    audioMasterMultiplier = (float.Parse(newValue, CultureInfo.InvariantCulture) / 100);
+                    audioMasterMultiplier = (float.TryParse(newValue, out _) ? float.Parse(newValue, CultureInfo.InvariantCulture) / 100 : 1f);
                 }
             };
 
             On.RoR2.AudioManager.Awake += (orig, self) =>
             {
                 orig(self);
-                Print(AudioManager.cvVolumeMaster.GetString());
-                audioMasterMultiplier = (float.Parse(AudioManager.cvVolumeMaster.GetString(), CultureInfo.InvariantCulture) / 100);
+                DebugPrint(AudioManager.cvVolumeMaster.GetString());
+                audioMasterMultiplier = (float.TryParse(AudioManager.cvVolumeMaster.GetString(), out _) ? float.Parse(AudioManager.cvVolumeMaster.GetString(), CultureInfo.InvariantCulture) / 100 : 1f);
             };
         }
 
@@ -270,6 +272,15 @@ namespace Evaisa.VoiceChat
             UnityEngine.Debug.Log("[Voice Chat] " + (content.ToString()));
         }
 
+        public static void DebugPrint(object content)
+        {
+            if (debugMode)
+            {
+                UnityEngine.Debug.Log("[Voice Chat : Debugging] " + (content.ToString()));
+            }
+        }
+
+        
     }
 
 }

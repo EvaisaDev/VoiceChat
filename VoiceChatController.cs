@@ -101,7 +101,7 @@ namespace Evaisa.VoiceChat
                         var timeSinceLast = (int)(DateTime.Now - sample.lastSampleTime).TotalMilliseconds;
                         if (timeSinceLast > 100)
                         {
-                            //VoiceChat.Print("Possible desync, forcing audio execution.");
+                            //VoiceChat.DebugPrint("Possible desync, forcing audio execution.");
                             HandleSendData(new float[0], sample.id, true);
                         }
                     }
@@ -151,7 +151,7 @@ namespace Evaisa.VoiceChat
                            
                             if (!source.isPlaying)
                             {
-                               // VoiceChat.Print("Player killed.");
+                               // VoiceChat.DebugPrint("Player killed.");
                                 player.sources.RemoveAt(i);
                                 DestroyImmediate(source.gameObject);
                             }
@@ -214,7 +214,7 @@ namespace Evaisa.VoiceChat
 
                             gradient.SetKeys(colorKey, alphaKey);
 
-                            //VoiceChat.Print(audioLevel);
+                            //VoiceChat.DebugPrint(audioLevel);
                             var allyCards = RoR2.UI.HUD.instancesList[0].allyCardManager.gameObject.GetComponentsInChildren<AllyCardController>();
                             foreach (var allyCard in allyCards)
                             {
@@ -281,7 +281,7 @@ namespace Evaisa.VoiceChat
 
                 if (clipLoudness != 0)
                 {
-                  //  VoiceChat.Print("Volume: " + clipLoudness);
+                  //  VoiceChat.DebugPrint("Volume: " + clipLoudness);
                 }
 
      
@@ -304,7 +304,7 @@ namespace Evaisa.VoiceChat
 
                 gradient.SetKeys(colorKey, alphaKey);
 
-                //VoiceChat.Print(audioLevel);
+                //VoiceChat.DebugPrint(audioLevel);
                 var allyCards = RoR2.UI.HUD.instancesList[0].allyCardManager.gameObject.GetComponentsInChildren<AllyCardController>();
                 foreach (var allyCard in allyCards)
                 {
@@ -510,13 +510,13 @@ namespace Evaisa.VoiceChat
 
                                 HandleSendData(samples);
                                 wasTalking = true;
-                                //VoiceChat.Print("Currently talking!");
+                                //VoiceChat.DebugPrint("Currently talking!");
                             }
                             else
                             {
                                 if (wasTalking)
                                 {
-                                    VoiceChat.Print("Cleaning up.");
+                                    VoiceChat.DebugPrint("Cleaning up.");
                                     HandleSendData(new float[0], true);
                                 }
                                 wasTalking = false;
@@ -697,7 +697,7 @@ namespace Evaisa.VoiceChat
             {
                 var localizedAudio = VoiceChat.spatialSound.GetValue();
                 var localizedAudioDistance = (int)VoiceChat.voiceDistance.GetValue();
-                //VoiceChat.Print("3D Audio? " + localizedAudio);
+                //VoiceChat.DebugPrint("3D Audio? " + localizedAudio);
 
                 new SendVoiceChat
                 {
@@ -795,7 +795,7 @@ namespace Evaisa.VoiceChat
 
                 instance.chunkBuffer.First(chunkcollection => chunkcollection.chunkID == thisID).chunkData.Add(chunkData);
 
-                //VoiceChat.Print("End stream? " + isEndPoint);
+                //VoiceChat.DebugPrint("End stream? " + isEndPoint);
 
                 if (instance.chunkBuffer.First(chunkcollection => chunkcollection.chunkID == thisID).chunkData.Count == chunkCount || isEndPoint)
                 {
@@ -809,7 +809,7 @@ namespace Evaisa.VoiceChat
                         });
                     });
 
-                    VoiceChat.Print("Voicechat Bytes Received: " + chunkDataCombined.ToArray().Length);
+                    VoiceChat.DebugPrint("Voicechat Bytes Received: " + chunkDataCombined.ToArray().Length);
 
                     byte[] ba_decompressed = chunkDataCombined.Count != 0 ? CLZF2.Decompress(chunkDataCombined.ToArray()) : chunkDataCombined.ToArray();
 
@@ -835,8 +835,8 @@ namespace Evaisa.VoiceChat
 
 
 
-                    //VoiceChat.Print("BufferLength = " + instance.bufferLength);
-                    //VoiceChat.Print("Finish Up = " + isEndPoint);
+                    //VoiceChat.DebugPrint("BufferLength = " + instance.bufferLength);
+                    //VoiceChat.DebugPrint("Finish Up = " + isEndPoint);
 
 
                     instance.sampleBuffer.First(samplecollection => samplecollection.id == thisSampleID).lastSampleTime = DateTime.Now;
@@ -865,14 +865,14 @@ namespace Evaisa.VoiceChat
 
                         if(instance.sampleBuffer.RemoveAll(samplecollection => samplecollection.id == thisSampleID) > 0)
                         {
-                            VoiceChat.Print("Sample collection removed!");
+                            VoiceChat.DebugPrint("Sample collection removed!");
                         }
 
 
                         ba_decompressed = sampleDataCombined.ToArray();
 
-                        VoiceChat.Print("Playing " + ba_decompressed.Length + " bytes of voice data!");
-                        VoiceChat.Print("Bitrate/Frequency: "+FREQUENCY);
+                        VoiceChat.DebugPrint("Playing " + ba_decompressed.Length + " bytes of voice data!");
+                        VoiceChat.DebugPrint("Bitrate/Frequency: "+FREQUENCY);
 
                         var float_array = ToFloatArray(ba_decompressed);
 
@@ -895,13 +895,13 @@ namespace Evaisa.VoiceChat
                         var index = 0;
                         foreach (var user in NetworkUser.readOnlyInstancesList)
                         {
-                            VoiceChat.Print("Player found at index: " + index);
+                            VoiceChat.DebugPrint("Player found at index: " + index);
                             if (user.GetCurrentBody())
                             {
-                                VoiceChat.Print("Body found at index: " + index);
+                                VoiceChat.DebugPrint("Body found at index: " + index);
                                 if (user.netId == thisSampleID)
                                 {
-                                    //VoiceChat.Print("yo what the heck!");
+                                    //VoiceChat.DebugPrint("yo what the heck!");
                                     hasBody = true;
                                     body = user.GetCurrentBody();
                                 }
@@ -913,7 +913,7 @@ namespace Evaisa.VoiceChat
                         var audioClip = AudioClip.Create("", float_array.Length, chan, FREQUENCY, false);
                         audioClip.SetData(float_array, 0);
 
-                        VoiceChat.Print("3D Audio: " + localizedAudio);
+                        VoiceChat.DebugPrint("3D Audio: " + localizedAudio);
 
                         if (instance.players.Any(player => player.identifier == thisSampleID))
                         {
@@ -940,7 +940,7 @@ namespace Evaisa.VoiceChat
                                 audio1.maxDistance = 99999999f;
                                 audio1.panStereo = 0.0f;
                                 UnrealisticRolloff(audio1);
-                                VoiceChat.Print("Setting up 2D audio.");
+                                VoiceChat.DebugPrint("Setting up 2D audio.");
                             }
                             else
                             {
@@ -950,7 +950,7 @@ namespace Evaisa.VoiceChat
                                 audio1.maxDistance = localizedAudioDistance;
                                 audio1.panStereo = 0.0f;
                                 RealisticRolloff(audio1);
-                                VoiceChat.Print("Setting up 3D audio.");
+                                VoiceChat.DebugPrint("Setting up 3D audio.");
                             }
                             var extra_time = 0f;
                             foreach( var source in player.sources)
@@ -983,7 +983,7 @@ namespace Evaisa.VoiceChat
                                 audio1.maxDistance = 99999999f;
                                 audio1.panStereo = 0.0f;
                                 UnrealisticRolloff(audio1);
-                                VoiceChat.Print("Setting up 2D audio.");
+                                VoiceChat.DebugPrint("Setting up 2D audio.");
                             }
                             else
                             {
@@ -993,7 +993,7 @@ namespace Evaisa.VoiceChat
                                 audio1.maxDistance = localizedAudioDistance;
                                 audio1.panStereo = 0.0f;
                                 RealisticRolloff(audio1);
-                                VoiceChat.Print("Setting up 3D audio.");
+                                VoiceChat.DebugPrint("Setting up 3D audio.");
                             }
 
                             var player = new audioPlayer(thisSampleID);
@@ -1022,11 +1022,11 @@ namespace Evaisa.VoiceChat
 
 
 
-                        //VoiceChat.print("we got this far!");
+                        //VoiceChat.DebugPrint("we got this far!");
 
                         
 
-                        //VoiceChat.Print("Playing " + ba_decompressed.Length + " bytes of audio data.");
+                        //VoiceChat.DebugPrint("Playing " + ba_decompressed.Length + " bytes of audio data.");
 
                         //SoundPlayer.Play()
 

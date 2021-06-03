@@ -301,7 +301,7 @@ namespace Evaisa.VoiceChat
                 defaultValue = defaultValue ? "1" : "0",
                 name = name,
                 description = description,
-                convarID = RemoveSpecialCharacters((VoiceChat.modName + name).ToLower().Replace(" ", "_")),
+                convarID = RemoveSpecialCharacters((VoiceChat.modName + "_" + name).ToLower().Replace(" ", "_")),
                 tabName = tabName
             };
             if (pushToTop)
@@ -325,7 +325,7 @@ namespace Evaisa.VoiceChat
                 name = name,
                 description = description,
                 options = options,
-                convarID = RemoveSpecialCharacters((VoiceChat.modName + name).ToLower().Replace(" ", "_")),
+                convarID = RemoveSpecialCharacters((VoiceChat.modName + "_" + name).ToLower().Replace(" ", "_")),
                 tabName = tabName
             };
             if (pushToTop)
@@ -351,7 +351,7 @@ namespace Evaisa.VoiceChat
                 name = name,
                 description = description,
                 formatString = formatString,
-                convarID = RemoveSpecialCharacters((VoiceChat.modName + name).ToLower().Replace(" ", "_")),
+                convarID = RemoveSpecialCharacters((VoiceChat.modName + "_" + name).ToLower().Replace(" ", "_")),
                 tabName = tabName
             };
             if (pushToTop)
